@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "go test",
+      "type": "shell",
+      "command": "go test ./...",
+      "group": "test",
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "node tests",
+      "type": "shell",
+      "command": "npm test",
+      "group": "test"
+    },
+    {
+      "label": "ci",
+      "type": "shell",
+      "command": "bash scripts/ci.sh",
+      "group": "build"
+    }
+  ]
+}
