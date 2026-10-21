@@ -1,0 +1,28 @@
+name: release-integrity
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  refs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify production references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force origin main production --tags
+          test "$(git cat-file -t v1.0.0)" = tag
+          main_commit="$(git rev-parse origin/main)"
+          production_commit="$(git rev-parse origin/production)"
+          release_commit="$(git rev-parse 'v1.0.0^{}')"
+          test "$main_commit" = "$production_commit"
+          test "$main_commit" = "$release_commit"
+          echo "main=production=v1.0.0: $main_commit"

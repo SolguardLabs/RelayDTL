@@ -17,7 +17,7 @@
     {
       "label": "ci",
       "type": "shell",
-      "command": "bash scripts/ci.sh",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci.ps1",
       "group": "build"
     }
   ]

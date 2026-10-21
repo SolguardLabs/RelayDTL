@@ -126,7 +126,11 @@ func (a Amount) CeilMulBps(bps int64) (Amount, error) {
 		return 0, Invalid("amount.ceil_mul_bps", "amount overflow")
 	}
 	value := int64(a) * bps
-	return Amount((value + BpsScale - 1) / BpsScale), nil
+	quotient := value / BpsScale
+	if value%BpsScale != 0 {
+		quotient++
+	}
+	return Amount(quotient), nil
 }
 
 func (a Amount) Split(parts int64) (Amount, Amount, error) {
