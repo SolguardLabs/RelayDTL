@@ -1,38 +1,24 @@
-# Seguridad
+# Política de seguridad
 
-## Modelo
+RelayDTL separa admisión de mensajes, elección de ruta, confirmaciones y aplicación económica en el libro. El alcance de revisión incluye `src/`, la CLI en `cmd/` y las pruebas Go/TypeScript.
 
-RelayDTL asume nodos registrados con pesos de confirmacion, rutas configuradas
-por politica operativa y cuentas con saldo por asset. El motor debe conservar
-los fondos reservados, rechazar receipts fuera de ventana y liquidar solo cuando
-las confirmaciones observadas alcanzan quorum.
+```mermaid
+flowchart TD
+    I[Mensaje] --> H[Saldo y bloqueo]
+    H --> R[Capacidad, activo y ventana de ruta]
+    R --> T[Recibo con contexto y digest]
+    T --> C[Nodo activo y peso de confirmación]
+    C --> Q[Quórum de política]
+    Q --> S[Liquidación]
+    S --> L[Conservación por activo y eventos]
+```
 
-## Invariantes Esperadas
+Los controles cubren saldos disponibles y retenidos, expiración, capacidad y latencia de rutas, límites de fee, actividad de nodos, quórum ponderado y conservación de unidades por activo. Los códigos de error distinguen entrada inválida, política, fondos insuficientes, falta de quórum y estado cerrado. Las pruebas ejercitan los recorridos admitidos, rechazos y redondeo económico.
 
-- El saldo total por asset se conserva entre cuentas, escrow y reservas.
-- Un mensaje no puede liquidarse antes de cumplir quorum.
-- Los receipts fuera de expiracion no son admitidos para settlement.
-- Las rutas deben respetar capacidad, origen, destino, asset y ventanas.
-- Las confirmaciones deben proceder de nodos registrados y activos.
-- Los fees liquidados no pueden superar el limite economico del mensaje.
+## Supuestos
 
-## Validacion
+El proceso es local y no verifica firmas ni consenso entre nodos externos. Los digests identifican contenido de dominio, pero no sustituyen autenticación o un registro persistente. Una suma global conservada es una señal contable, no una revisión integral de todas las reglas de negocio.
 
-La suite local ejecuta tests Go y escenarios TypeScript sobre el binario. CI
-aplica formato, tests, `go vet` y tests Node. Dependabot mantiene actualizadas
-las dependencias de Go, npm y GitHub Actions.
+## Divulgación responsable
 
-## Alcance De Revision
-
-La revision debe cubrir:
-
-- `src/ledger*` para accounting y reservas.
-- `src/settlement*` para finalizacion de receipts.
-- `src/confirmation*` para quorum y estados.
-- `src/route*` para seleccion y admision de rutas.
-- `src/scenario*` para interpretacion de entradas JSON.
-
-## Reporte Interno
-
-Los reportes deben incluir resumen, severidad, precondiciones, impacto
-economico, pasos conceptuales, mitigacion y tests recomendados.
+Comuníque los hallazgos mediante [GitHub Security Advisories](../../security/advisories/new), no en un issue abierto. Incluya commit, precondiciones, impacto, reproducción mínima y evidencia de balances. No utilice fondos ni sistemas de terceros para validar informes. Los pasos de respuesta deben coordinarse antes de publicar detalles técnicos.

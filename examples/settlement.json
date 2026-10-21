@@ -1,0 +1,53 @@
+{
+  "name": "regional-settlement",
+  "now": 10,
+  "policy": {
+    "network_id": "relay-regional-v1",
+    "reserve_account": "relay:reserve",
+    "quorum_weight": 2,
+    "reject_weight": 2,
+    "max_message_ttl": 120,
+    "max_receipt_drift": 20
+  },
+  "accounts": [
+    { "id": "payer:alice", "kind": "user", "balances": { "USDC": 10000 } },
+    { "id": "beneficiary:bob", "kind": "user", "balances": { "USDC": 0 } },
+    { "id": "operator:west", "kind": "operator", "balances": { "USDC": 0 } },
+    { "id": "relay:reserve", "kind": "reserve", "balances": { "USDC": 5000 } }
+  ],
+  "nodes": [
+    { "id": "node:a", "weight": 1, "operator": "operator:west" },
+    { "id": "node:b", "weight": 1, "operator": "operator:west" }
+  ],
+  "routes": [
+    {
+      "id": "route:west",
+      "source": "node:a",
+      "target": "node:b",
+      "asset": "USDC",
+      "operator": "operator:west",
+      "capacity": 5000,
+      "fee_bps": 20,
+      "latency": 4,
+      "priority": 1
+    }
+  ],
+  "steps": [
+    {
+      "op": "submit_message",
+      "message_id": "msg:regional-001",
+      "source": "node:a",
+      "target": "node:b",
+      "payer": "payer:alice",
+      "beneficiary": "beneficiary:bob",
+      "asset": "USDC",
+      "amount": 1000,
+      "fee_limit": 25,
+      "expires_at": 80
+    },
+    { "op": "receipt", "message_id": "msg:regional-001", "receipt_id": "rcpt:regional-001", "route_id": "route:west" },
+    { "op": "confirm", "receipt_id": "rcpt:regional-001", "node_id": "node:a" },
+    { "op": "confirm", "receipt_id": "rcpt:regional-001", "node_id": "node:b" },
+    { "op": "settle", "receipt_id": "rcpt:regional-001" }
+  ]
+}

@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-gofmt -l cmd src | tee /tmp/relaydtl-gofmt.txt
-test ! -s /tmp/relaydtl-gofmt.txt
-go test ./...
+unformatted="$(gofmt -l cmd src)"
+if [[ -n "$unformatted" ]]; then
+  printf 'Go files need formatting:\n%s\n' "$unformatted"
+  exit 1
+fi
+
 go vet ./...
 npm ci
-npm test
+bash scripts/tests.sh

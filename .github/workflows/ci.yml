@@ -2,6 +2,8 @@ name: ci
 
 on:
   push:
+    branches: [main, production]
+    tags: ["v*"]
   pull_request:
 
 jobs:

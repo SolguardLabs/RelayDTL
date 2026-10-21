@@ -207,6 +207,9 @@ func (e *SettlementEngine) Apply(message *Message, receipt *Receipt, route *Rout
 		"receipt_id": string(receipt.ID),
 		"route_id":   string(receipt.RouteID),
 	}
+	if !e.policy.AllowReserveCompletion && e.ledger.Held(effect.Payer, effect.Asset) < effect.TotalDebit() {
+		return SettlementResult{}, PolicyError("settlement.apply", "reserve completion disabled for this policy")
+	}
 	charge, err := e.ledger.ChargeHeldOrReserve(effect.Payer, e.policy.ReserveAccount, effect.Asset, effect.TotalDebit(), meta)
 	if err != nil {
 		return SettlementResult{}, err
