@@ -20,7 +20,7 @@ flowchart LR
     L --> V[Reserva del relayer]
 ```
 
-El pagador bloquea `principal + fee_limit` al enviar un mensaje. Una ruta admitida produce un recibo que fija activo, importe, operador, contexto, ventana y digest. Las confirmaciones de nodos activos aportan peso al quórum. La liquidación acredita principal y fee, devuelve el margen de fee no utilizado y registra la fuente del cargo. La reserva del relayer puede completar importes cuando la política lo permite.
+El pagador bloquea `principal + fee_limit` al enviar un mensaje. Una ruta admitida produce un recibo que fija activo, importe, operador, contexto, ventana y digest. Una ruta puede añadir una tarifa de congestión no lineal a la base y a los componentes por hop. Las confirmaciones de nodos activos aportan peso al quórum del recibo concreto. La liquidación acredita principal y fee, devuelve el margen de fee no utilizado y registra la fuente del cargo. La reserva del relayer puede completar importes cuando la política lo permite.
 
 ## Ejecución
 
@@ -42,14 +42,15 @@ La CLI también acepta `--demo`. En Windows, `.\scripts\ci.ps1` ejecuta formato,
 
 ```text
 bloqueo inicial = principal + fee_limit
-fee de ruta = base_fee + ceil(principal × fee_bps / 10 000) + fees de hops
+fee de ruta = base_fee + ceil(principal × fee_bps / 10 000)
+              + fees de hops + prima de congestión
 importe de liquidación = principal + fee de ruta
 reembolso de fee = fee_limit − fee de ruta
 ```
 
 Para un mensaje de 1.000 USDC con `fee_limit = 25`, una ruta de 20 bps genera fee 2. Tras quórum, el beneficiario recibe 1.000, el operador 2 y el pagador recupera 23 del bloqueo. Los importes son unidades enteras declaradas por el escenario. `Ledger.AssertConserved` compara la suma por activo antes y después de las operaciones; las vistas de saldo separan disponible y retenido.
 
-Consulte [arquitectura](docs/arquitectura.md), [modelo económico](docs/modelo-economico.md), [integración](docs/integracion.md), [operación](docs/operacion.md) y [seguridad operativa](docs/seguridad-operativa.md). La comunicación privada de hallazgos se describe en [SECURITY.md](SECURITY.md).
+Consulte [arquitectura](docs/arquitectura.md), [modelo económico](docs/modelo-economico.md), [tarifas y capacidad](docs/tarifas-capacidad.md), [integración](docs/integracion.md), [operación](docs/operacion.md) y [seguridad operativa](docs/seguridad-operativa.md). La comunicación privada de hallazgos se describe en [SECURITY.md](SECURITY.md).
 
 ## Estructura
 

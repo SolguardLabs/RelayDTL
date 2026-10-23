@@ -2,6 +2,7 @@ package relay
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 )
 
@@ -37,22 +38,23 @@ const (
 )
 
 type Route struct {
-	ID          RouteID     `json:"id"`
-	Source      NodeID      `json:"source"`
-	Target      NodeID      `json:"target"`
-	Asset       AssetID     `json:"asset"`
-	Operator    AccountID   `json:"operator"`
-	Capacity    Amount      `json:"capacity"`
-	Reserved    Amount      `json:"reserved"`
-	BaseFee     Amount      `json:"base_fee"`
-	FeeBps      int64       `json:"fee_bps"`
-	Latency     uint64      `json:"latency"`
-	NotBefore   Epoch       `json:"not_before"`
-	NotAfter    Epoch       `json:"not_after"`
-	Status      RouteStatus `json:"status"`
-	Hops        []Hop       `json:"hops,omitempty"`
-	Priority    int         `json:"priority"`
-	Description string      `json:"description,omitempty"`
+	ID            RouteID     `json:"id"`
+	Source        NodeID      `json:"source"`
+	Target        NodeID      `json:"target"`
+	Asset         AssetID     `json:"asset"`
+	Operator      AccountID   `json:"operator"`
+	Capacity      Amount      `json:"capacity"`
+	Reserved      Amount      `json:"reserved"`
+	BaseFee       Amount      `json:"base_fee"`
+	FeeBps        int64       `json:"fee_bps"`
+	CongestionBps int64       `json:"congestion_bps"`
+	Latency       uint64      `json:"latency"`
+	NotBefore     Epoch       `json:"not_before"`
+	NotAfter      Epoch       `json:"not_after"`
+	Status        RouteStatus `json:"status"`
+	Hops          []Hop       `json:"hops,omitempty"`
+	Priority      int         `json:"priority"`
+	Description   string      `json:"description,omitempty"`
 }
 
 func NewRoute(id RouteID, source NodeID, target NodeID, asset AssetID, operator AccountID, capacity Amount) (Route, error) {
@@ -103,6 +105,12 @@ func (r Route) ValidateStatic() error {
 	}
 	if r.FeeBps < 0 || r.FeeBps > BpsScale {
 		return Invalid("route.validate", "route fee bps out of range")
+	}
+	if r.CongestionBps < 0 || r.CongestionBps > BpsScale {
+		return Invalid("route.validate", "route congestion bps out of range")
+	}
+	if r.CongestionBps > 0 && r.Capacity == 0 {
+		return Invalid("route.validate", "congestion pricing requires capacity")
 	}
 	if r.NotAfter != 0 && r.NotBefore > r.NotAfter {
 		return Invalid("route.validate", "invalid route epoch window")
@@ -185,6 +193,20 @@ func (r Route) FeeFor(amount Amount) (Amount, error) {
 		}
 		fee = fee.MustAdd(hopFee)
 	}
+	if r.CongestionBps > 0 {
+		load := new(big.Int).Mul(big.NewInt(int64(r.Reserved)), big.NewInt(int64(r.Reserved)))
+		load.Add(load, new(big.Int).Mul(big.NewInt(int64(amount)), big.NewInt(int64(amount))))
+		premium := new(big.Int).Mul(load, big.NewInt(int64(amount)))
+		premium.Mul(premium, big.NewInt(r.CongestionBps))
+		denominator := new(big.Int).Mul(big.NewInt(int64(r.Capacity)), big.NewInt(int64(r.Capacity)))
+		denominator.Mul(denominator, big.NewInt(BpsScale))
+		premium.Add(premium, new(big.Int).Sub(denominator, big.NewInt(1)))
+		premium.Quo(premium, denominator)
+		if !premium.IsInt64() {
+			return 0, Invalid("route.fee", "congestion premium exceeds supported amount")
+		}
+		return fee.Add(Amount(premium.Int64()))
+	}
 	return fee, nil
 }
 
@@ -198,6 +220,7 @@ func (r Route) Digest() Digest {
 		r.Capacity.String(),
 		r.BaseFee.String(),
 		fmt.Sprintf("%d", r.FeeBps),
+		fmt.Sprintf("%d", r.CongestionBps),
 		fmt.Sprintf("%d", r.Latency),
 		fmt.Sprintf("%d", r.NotBefore),
 		fmt.Sprintf("%d", r.NotAfter),

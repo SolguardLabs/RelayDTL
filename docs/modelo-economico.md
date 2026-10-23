@@ -6,11 +6,19 @@ Todas las cantidades son enteras no negativas en unidades del activo declarado. 
 locked = principal + fee_limit
 route_fee = base_fee + ceil(principal × fee_bps / 10 000)
           + suma(ceil(principal × hop_fee_bps / 10 000))
+          + prima_congestion(capacidad, reserva, principal)
 settlement_debit = principal + route_fee
 fee_refund = fee_limit − route_fee
 ```
 
 La ruta se rechaza si el fee calculado supera el límite del mensaje. Por ejemplo, 1.000 USDC por una ruta de 20 bps cuesta 2 USDC. Si `fee_limit = 25`, se bloquean 1.025, se aplican 1.002 y se liberan 23. Una ruta alternativa con base 2 y 25 bps costaría 5 USDC para el mismo principal.
+
+La prima opcional de congestión usa `congestion_bps`, capacidad, reservas de
+ruta y tamaño del mensaje. Aumenta de forma no lineal al ocupar capacidad y
+se fija en el recibo al aceptar la ruta. La cotización debe caber en el
+`fee_limit` firmado por el pagador; un fee suministrado por el cliente por
+debajo de la tarifa calculada no se acepta. Véase
+[tarifas y capacidad](tarifas-capacidad.md) para conciliación y ejemplos.
 
 ```mermaid
 flowchart LR

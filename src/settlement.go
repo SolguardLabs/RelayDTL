@@ -168,7 +168,7 @@ func (e *SettlementEngine) Ready(receipt Receipt, confirmations *ConfirmationBoo
 	if view.Rejected(e.policy) {
 		return view, NewRelayError(ErrConfirmation, "settlement.ready", "message rejected by quorum")
 	}
-	if !view.Ready(e.policy) {
+	if !view.Ready(e.policy) || view.Receipts[receipt.ID] < e.policy.QuorumWeight {
 		return view, NotReady("settlement.ready", "confirmation quorum not reached")
 	}
 	return view, nil
@@ -184,11 +184,14 @@ func (e *SettlementEngine) Apply(message *Message, receipt *Receipt, route *Rout
 	if receipt.Status == ReceiptExpired || receipt.Status == ReceiptRejected {
 		return SettlementResult{}, NewRelayError(ErrSettlementClosed, "settlement.apply", "receipt not settleable")
 	}
-	if message.Status == MessageExpired || message.Status == MessageCancelled {
+	if message.Status == MessageExpired || message.Status == MessageCancelled || message.Status == MessageSettled {
 		return SettlementResult{}, NewRelayError(ErrSettlementClosed, "settlement.apply", "message not settleable")
 	}
 	if err := receipt.ValidateAgainst(*message, *route, e.ledger.Now(), e.policy); err != nil {
 		return SettlementResult{}, err
+	}
+	if route.Reserved < receipt.Amount {
+		return SettlementResult{}, NewRelayError(ErrRouteUnavailable, "settlement.apply", "receipt capacity reservation is unavailable")
 	}
 	view, err := e.Ready(*receipt, confirmations)
 	if err != nil {

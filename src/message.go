@@ -192,7 +192,7 @@ func (m *Message) MarkExpired() {
 }
 
 func (m *Message) CanAcceptReceipt(now Epoch) bool {
-	if m.Status == MessageCancelled || m.Status == MessageExpired {
+	if m.Status == MessageCancelled || m.Status == MessageExpired || m.Status == MessageSettled {
 		return false
 	}
 	return now <= m.ExpiresAt

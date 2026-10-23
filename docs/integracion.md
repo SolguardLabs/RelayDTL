@@ -6,7 +6,7 @@ El proyecto expone un motor Go y una CLI de escenarios JSON. Una integración de
 
 1. Registre cuentas por tipo (usuario, operador, reserva) y activo.
 2. Registre nodos con peso, operador y estado activo.
-3. Configure rutas con extremos, activo, capacidad, fee, latencia y ventana.
+3. Configure rutas con extremos, activo, capacidad, fee base, bps, congestión opcional, latencia y ventana.
 4. Configure política de quórum, rechazo, TTL, deriva y completado por reserva.
 5. Envíe mensajes con `message_id` único, pagador, beneficiario, principal y fee máximo.
 
