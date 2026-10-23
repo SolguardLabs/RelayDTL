@@ -31,3 +31,21 @@ func TestDocumentedSettlementScenario(t *testing.T) {
 		t.Fatalf("conserved USDC = %d, want 15000", got)
 	}
 }
+
+func TestSettledMessageCannotAcceptAnotherReceipt(t *testing.T) {
+	scenario := DemoScenario()
+	scenario.Steps = append(scenario.Steps, ScenarioStep{
+		Op: "receipt", MessageID: "msg:demo", ReceiptID: "rcpt:another",
+		RouteID: "route:west", ExpectError: true,
+	})
+	result, err := RunScenario(scenario)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.OK || result.Steps[5].ErrorCode != ErrExpired {
+		t.Fatalf("settled message accepted a receipt: %+v", result.Steps[5])
+	}
+	if got := result.Snapshot.Balances["beneficiary:bob"]["USDC"].Available; got != 1_000 {
+		t.Fatalf("beneficiary received %d, want 1000", got)
+	}
+}

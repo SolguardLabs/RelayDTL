@@ -1,6 +1,9 @@
 name: release-integrity
 
 on:
+  push:
+    branches: [main, production]
+    tags: ["v*"]
   release:
     types: [published]
   workflow_dispatch:
@@ -16,13 +19,24 @@ jobs:
           fetch-depth: 0
       - name: Verify production references
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
           git fetch --force origin main production --tags
-          test "$(git cat-file -t v1.0.0)" = tag
           main_commit="$(git rev-parse origin/main)"
-          production_commit="$(git rev-parse origin/production)"
-          release_commit="$(git rev-parse 'v1.0.0^{}')"
-          test "$main_commit" = "$production_commit"
-          test "$main_commit" = "$release_commit"
-          echo "main=production=v1.0.0: $main_commit"
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            test -n "$RELEASE_TAG"
+            test "$(git cat-file -t "$RELEASE_TAG")" = tag
+            test "$(git rev-parse "$RELEASE_TAG^{}")" = "$main_commit"
+            test "$(git rev-parse origin/production)" = "$main_commit"
+          elif [[ "$REF_TYPE" == "tag" ]]; then
+            test "$(git cat-file -t "$REF_NAME")" = tag
+            test "$(git rev-parse "$REF_NAME^{}")" = "$main_commit"
+          elif [[ "$REF_NAME" == "production" ]]; then
+            test "$(git rev-parse HEAD)" = "$main_commit"
+          fi
+          echo "Verified $EVENT_NAME $REF_NAME at $main_commit"

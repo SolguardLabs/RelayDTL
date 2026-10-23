@@ -33,7 +33,7 @@ sequenceDiagram
     R->>L: acreditar operador y devolver fee restante
 ```
 
-Los IDs de mensaje, recibo, ruta y contexto identifican objetos distintos. El recibo captura un digest de la ruta; cada confirmación añade nodo, estado, peso y época. El `SettlementEngine` mantiene el estado del efecto económico de cada recibo, mientras el diario registra débitos, créditos, retenciones y liberaciones.
+Los IDs de mensaje, recibo, ruta y contexto identifican objetos distintos. El recibo captura un digest de la ruta; cada confirmación añade nodo, estado, peso y época. El quórum de entrega debe pertenecer al recibo que se liquida. El `SettlementEngine` mantiene el estado del efecto económico de cada recibo, mientras el diario registra débitos, créditos, retenciones y liberaciones. Una vez liquidado el mensaje, sus otros recibos no pueden aplicar otro efecto.
 
 ## Estados
 

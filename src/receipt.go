@@ -50,6 +50,9 @@ func NewReceipt(message Message, route Route, draft ReceiptDraft, now Epoch, pol
 	if draft.MessageID != message.ID {
 		return Receipt{}, Invalid("receipt.new", "receipt message mismatch")
 	}
+	if !route.CanCarry(message, now) {
+		return Receipt{}, NewRelayError(ErrRouteUnavailable, "receipt.new", "route cannot reserve message")
+	}
 	if !draft.RouteID.IsZero() && draft.RouteID != route.ID {
 		return Receipt{}, Invalid("receipt.new", "receipt route mismatch")
 	}
@@ -69,13 +72,15 @@ func NewReceipt(message Message, route Route, draft ReceiptDraft, now Epoch, pol
 	if operator.IsZero() {
 		operator = route.Operator
 	}
+	computed, err := route.FeeFor(message.Amount)
+	if err != nil {
+		return Receipt{}, err
+	}
 	fee := draft.Fee
 	if fee == 0 {
-		computed, err := route.FeeFor(message.Amount)
-		if err != nil {
-			return Receipt{}, err
-		}
 		fee = computed
+	} else if fee < computed {
+		return Receipt{}, PolicyError("receipt.new", "receipt fee is below route tariff")
 	}
 	receipt := Receipt{
 		ID:          draft.ID,
@@ -166,7 +171,7 @@ func (r Receipt) ValidateAgainst(message Message, route Route, now Epoch, policy
 	if !route.ActiveAt(r.ObservedAt) {
 		return NewRelayError(ErrRouteUnavailable, "receipt.validate", "route inactive at observation")
 	}
-	if !route.CanCarry(message, r.ObservedAt) {
+	if route.Capacity < message.Amount || r.ObservedAt.Add(route.Latency) > message.ExpiresAt {
 		return NewRelayError(ErrRouteUnavailable, "receipt.validate", "route cannot carry message")
 	}
 	if r.RouteDigest != "" && r.RouteDigest != route.Digest() {

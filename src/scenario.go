@@ -51,22 +51,23 @@ type ScenarioHop struct {
 }
 
 type ScenarioRoute struct {
-	ID          string        `json:"id"`
-	Source      string        `json:"source"`
-	Target      string        `json:"target"`
-	Asset       string        `json:"asset"`
-	Operator    string        `json:"operator"`
-	Capacity    int64         `json:"capacity"`
-	Reserved    int64         `json:"reserved,omitempty"`
-	BaseFee     int64         `json:"base_fee,omitempty"`
-	FeeBps      int64         `json:"fee_bps,omitempty"`
-	Latency     uint64        `json:"latency,omitempty"`
-	NotBefore   Epoch         `json:"not_before,omitempty"`
-	NotAfter    Epoch         `json:"not_after,omitempty"`
-	Status      RouteStatus   `json:"status,omitempty"`
-	Hops        []ScenarioHop `json:"hops,omitempty"`
-	Priority    int           `json:"priority,omitempty"`
-	Description string        `json:"description,omitempty"`
+	ID            string        `json:"id"`
+	Source        string        `json:"source"`
+	Target        string        `json:"target"`
+	Asset         string        `json:"asset"`
+	Operator      string        `json:"operator"`
+	Capacity      int64         `json:"capacity"`
+	Reserved      int64         `json:"reserved,omitempty"`
+	BaseFee       int64         `json:"base_fee,omitempty"`
+	FeeBps        int64         `json:"fee_bps,omitempty"`
+	CongestionBps int64         `json:"congestion_bps,omitempty"`
+	Latency       uint64        `json:"latency,omitempty"`
+	NotBefore     Epoch         `json:"not_before,omitempty"`
+	NotAfter      Epoch         `json:"not_after,omitempty"`
+	Status        RouteStatus   `json:"status,omitempty"`
+	Hops          []ScenarioHop `json:"hops,omitempty"`
+	Priority      int           `json:"priority,omitempty"`
+	Description   string        `json:"description,omitempty"`
 }
 
 type ScenarioStep struct {
@@ -395,6 +396,7 @@ func (s ScenarioRoute) ToRoute() (Route, error) {
 	route.Reserved = Amount(s.Reserved)
 	route.BaseFee = Amount(s.BaseFee)
 	route.FeeBps = s.FeeBps
+	route.CongestionBps = s.CongestionBps
 	route.Latency = s.Latency
 	route.NotBefore = s.NotBefore
 	route.NotAfter = s.NotAfter

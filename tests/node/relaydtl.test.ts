@@ -267,3 +267,54 @@ test("selects an alternative route when the primary route lacks capacity", () =>
   assert.equal(balance(result, "beneficiary:bob", "USDC").available, 1_200);
   assert.equal(balance(result, "operator:east", "USDC").available, 5);
 });
+
+test("quotes and settles a capacity-priced route", () => {
+  const result = runScenario(
+    baseScenario({
+      name: "capacity-pricing",
+      accounts: [
+        { id: "payer:alice", kind: "user", balances: { USDC: 1_000_000 } },
+        { id: "beneficiary:bob", kind: "user", balances: { USDC: 0 } },
+        { id: "operator:west", kind: "operator", balances: { USDC: 0 } },
+        { id: "relay:reserve", kind: "reserve", balances: { USDC: 50_000 } },
+      ],
+      routes: [
+        {
+          id: "route:priced",
+          source: "node:a",
+          target: "node:c",
+          asset: "USDC",
+          operator: "operator:west",
+          capacity: 1_000_000,
+          congestion_bps: 5_000,
+          latency: 4,
+        },
+      ],
+      steps: [
+        {
+          op: "submit_message",
+          message_id: "msg:priced",
+          source: "node:a",
+          target: "node:c",
+          payer: "payer:alice",
+          beneficiary: "beneficiary:bob",
+          asset: "USDC",
+          amount: 400_000,
+          fee_limit: 150_000,
+          expires_at: 80,
+        },
+        { op: "receipt", message_id: "msg:priced", receipt_id: "rcpt:priced", route_id: "route:priced" },
+        { op: "confirm", receipt_id: "rcpt:priced", node_id: "node:a" },
+        { op: "confirm", receipt_id: "rcpt:priced", node_id: "node:b" },
+        { op: "settle", receipt_id: "rcpt:priced" },
+      ],
+    }),
+  );
+
+  assert.equal(result.steps[1].receipt?.fee, 32_000);
+  assert.equal(result.steps[4].settlement?.released_refund, 118_000);
+  assert.equal(balance(result, "beneficiary:bob", "USDC").available, 400_000);
+  assert.equal(balance(result, "operator:west", "USDC").available, 32_000);
+  assert.equal(balance(result, "payer:alice", "USDC").available, 568_000);
+  assert.equal(result.snapshot.totals.USDC, 1_050_000);
+});

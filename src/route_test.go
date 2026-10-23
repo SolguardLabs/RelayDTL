@@ -28,3 +28,21 @@ func TestRouteCapacityReflectsReservations(t *testing.T) {
 		t.Fatalf("available = %d, want 3750", got)
 	}
 }
+
+func TestRouteQuotesInitialCongestionPremium(t *testing.T) {
+	route, err := NewRoute("route:priced", "node:a", "node:c", "USDC", "operator:west", 1_000_000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	route.CongestionBps = 5_000
+	fee, err := route.FeeFor(400_000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fee != 32_000 {
+		t.Fatalf("initial congestion fee = %d, want 32000", fee)
+	}
+	if route.Digest() == "" {
+		t.Fatal("priced route digest is empty")
+	}
+}

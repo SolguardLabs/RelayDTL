@@ -13,7 +13,7 @@ flowchart TD
     S --> L[Conservación por activo y eventos]
 ```
 
-Los controles cubren saldos disponibles y retenidos, expiración, capacidad y latencia de rutas, límites de fee, actividad de nodos, quórum ponderado y conservación de unidades por activo. Los códigos de error distinguen entrada inválida, política, fondos insuficientes, falta de quórum y estado cerrado. Las pruebas ejercitan los recorridos admitidos, rechazos y redondeo económico.
+Los controles cubren saldos disponibles y retenidos, expiración, capacidad y latencia de rutas, tarifa mínima calculada, límites de fee, actividad de nodos, quórum ponderado por recibo y conservación de unidades por activo. Un mensaje ya liquidado no acepta nuevos recibos ni aplica efectos pendientes adicionales. Los códigos de error distinguen entrada inválida, política, fondos insuficientes, falta de quórum y estado cerrado. Las pruebas ejercitan los recorridos admitidos, rechazos y redondeo económico.
 
 ## Supuestos
 
